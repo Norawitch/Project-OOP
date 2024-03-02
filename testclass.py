@@ -1,0 +1,346 @@
+class System:
+    def __init__(self):
+        self.__list_customer = []
+        self.__list_brand = []
+        self.__list_category = []
+        self.__list_order = []
+        self.__list_promotion_code = []
+        self.__order_id_counter = 0
+
+    def get_list_customer(self):
+        return self.__list_customer
+    
+    def get_list_brand(self):
+        return self.__list_brand
+    
+    def get_list_category(self):
+        return self.__list_category
+    
+    def get_list_order(self):
+        return self.__list_order
+    
+    def get_list_promotion_code(self):
+        return self.__list_promotion_code
+    
+    def add_customer(self, customer):
+        self.__list_customer.append(customer)
+    
+    def add_category(self , category):
+        self.__list_category.append(category)
+
+    def add_order(self, order):
+        self.__list_order.append(order)
+        self.__order_id_counter += 1
+        order.edit_order_id(self.__order_id_counter)  # Pass the incremented order_id
+
+    def search_accessory_by_name(self, input_name):
+        search = ""
+        for category in self.get_list_category():
+            for accessory in category.get_list_accessory():
+                if input_name.lower() in accessory.get_accessory_brand().lower():
+                    search = accessory.get_accessory_brand()
+        list_accessory_result = []
+        for category in self.get_list_category():
+            for accessory in category.get_list_accessory():
+                if search == accessory.get_accessory_brand():
+                    list_accessory_result.append(accessory)
+        return list_accessory_result
+    
+    def search_accessory_by_price(self, min_price, max_price):
+        def sort_price(list_accessory_result):
+            for i in range(len(list_accessory_result)-1):
+                for i in range(len(list_accessory_result)-1):
+                    if list_accessory_result[i].get_accessory_cost() > list_accessory_result[i+1].get_accessory_cost():
+                        temp = list_accessory_result[i]
+                        list_accessory_result[i] = list_accessory_result[i+1]
+                        list_accessory_result[i+1] = temp
+            return list_accessory_result
+        list_accessory_result = []
+        for category in self.get_list_category():
+            for accessory in category.get_list_accessory():
+                if accessory.get_accessory_cost() >= min_price and accessory.get_accessory_cost() <= max_price:
+                    list_accessory_result.append(accessory)
+        if len(list_accessory_result) > 0:
+            sort_accessory = sort_price(list_accessory_result)
+            return sort_accessory
+        else:
+            return None
+        
+    def search_accessory_by_id(self, accessory_id):
+        for category in self.get_list_category():
+            for accessory in category.get_list_accessory():
+                if accessory_id == accessory.get_accessory_id():
+                    return accessory
+        return None
+      
+class Category:
+    def __init__(self,category_type,category_amount = None):
+        self.__category_type = category_type
+        self.__category_amount = None
+        self.__list_Accessory = [] 
+
+    def get_category_type(self):
+        return self.__category_type
+    
+    def get_category_amount(self):
+        return self.__category_amount
+    
+    def add_accessory(self, accessory):
+        self.__list_Accessory.append(accessory)
+
+    def get_list_accessory(self):
+        return self.__list_Accessory
+
+class Accessory:
+    def __init__(self,id,name,brand,cost,lenter):
+        self.__accessory_id = id
+        self.__accessory_name = name
+        self.__accessory_brand = brand
+        self.__accessory_cost = cost
+        self.__accessory_lenter = lenter
+        self.__reservation_accessory_list =[]
+
+    def get_accessory_id(self):
+        return self.__accessory_id
+    
+    def get_accessory_name(self):
+        return self.__accessory_name
+    
+    def get_accessory_brand(self):
+        return self.__accessory_brand
+    
+    def get_accessory_cost(self):
+        return self.__accessory_cost
+    
+    def get_accessory_lenter(self):
+        return self.__accessory_lenter
+    
+    def get_list_reservation(self):
+        return self.__list_reservation
+    
+    def add_reservation_list(self, reservation_accessory):
+        self.__reservation_accessory_list.append(reservation_accessory)
+
+class Payment:
+    def __init__(self,payment_id , payment_type , name , payment_id_bank , bank ):
+        self.__payment_type = payment_type
+        self.__payment_id = payment_id
+        self.__payment_id_bank = payment_id_bank
+        self.__bank = bank
+        self.__name = name
+
+    def get_payment_id(self):
+        return self.__payment_id
+    
+    def get_payment_id_bank(self):
+        return self.__payment_id_bank
+    
+    def get_bank(self):
+        return self.__bank
+    
+    def get_name(self):
+        return self.__name
+    
+class Account:
+    def __init__(self, email, password, name, address):
+        self.__email = email
+        self.__password = password
+        self.__name = name
+        self.__address = address
+
+    def get_name(self):
+        return self.__name
+    
+    def get_email(self):
+        return self.__email
+    
+    def get_password(self):
+        return self.__password
+    
+    def get_address(self):
+        return self.__address
+    
+class Customer(Account):
+    def __init__(self, customer_id, email, password, name , address, cart = None):
+        super().__init__(email, password, name, address)
+        self.__customer_id = customer_id
+        self.__cart = None
+        self.__list_order = []
+        self.__list_payment = []
+
+    def get_customer_id(self):
+        return self.__customer_id
+    
+    def get_list_order(self):
+        return self.__list_order
+    
+    def get_cart(self):
+        return self.__cart
+    
+    def add_cart(self, cart):
+        self.__cart = cart
+    
+    def add_order(self, order):
+        self.__list_order.append(order)
+    
+class Cart:
+    def __init__(self, cart_id):
+        self.__cart_id = cart_id
+        self.__list_accessory_in_cart = []
+        self.__amount = 0
+        self.__status = 0
+    
+    def get_cart_status(self):
+        return self.__status
+        
+    def set_cart_status(self, status):
+        self.__status = status
+    
+    def get_cart_id(self):
+        return self.__cart_id
+
+    def get_amount(self):
+        return self.__amount
+    
+    def set_amount(self, amount):
+        self.__amount = amount
+
+    def get_list_accessory_in_cart(self):
+        return self.__list_accessory_in_cart
+
+    def add_accessory_to_cart(self, accessory):
+        self.__list_accessory_in_cart.append(accessory)
+        self.__amount += 1
+
+    def delete_accessory_in_cart(self, accessory):
+        self.__list_accessory_in_cart.remove(accessory)
+        self.__amount -= 1
+
+    def clear_accessory_in_cart(self):
+        self.__list_accessory_in_cart.clear()
+        self.__amount = 0
+    
+    def check_reservation_accessory(self,reservation):
+        for accessory in self.__list_accessory_in_cart:
+            for i in accessory.get_list_reservation():
+                print(i.get_date_start())
+                if i.get_date_start() == reservation.get_date_start():
+                    return "unavailable"
+        return "Success"
+
+class Order:
+    __order_id = 1
+    def __init__(self, status, customer_id):
+        self.__status = status
+        self.__customer_id = customer_id
+        self.__list_reservation_accessory_in_order = []
+        self.__total_cost = 0
+
+    def get_order_id(self):
+        return self.__order_id
+    
+    def get_order_status(self):
+        return self.__status
+    
+    def get_customer_id(self):
+        return self.__customer_id
+    
+    def get_list_reservation_accessory_in_order(self):
+        return self.__list_reservation_accessory_in_order
+    
+    def get_total_cost(self):
+        self.__total_cost = self.calculate_total_cost()
+        return self.__total_cost
+    def calculate_total_cost(self):
+        total = 0
+        for reservation_accessory in self.__list_reservation_accessory_in_order:
+            total += reservation_accessory.get_reservation_accessory().get_accessory_cost() * reservation_accessory.date_difference(reservation_accessory.get_date_start(), reservation_accessory.get_date_end())
+        return total
+
+    def add_reservation_accessory_in_order(self, reservation_accessory):
+        self.__list_reservation_accessory_in_order.append(reservation_accessory)
+    
+    def edit_order_id(self, order_id):
+        self.__order_id = order_id
+
+    def edit_status(self, status):
+        self.__status = status
+
+class ReservationAccessory:
+    def __init__(self, reservation_accessory, date_start, date_end):
+        self.__reservation_accessory = reservation_accessory    # clone of accessory (Accessory Object)
+        self.__date_start = date_start
+        self.__date_end = date_end
+    
+    def get_date_start(self):
+        return self.__date_start
+    
+    def get_date_end(self):
+        return self.__date_end
+    
+    def get_reservation_accessory(self):
+        return self.__reservation_accessory
+
+    def date_difference(self, date_start, date_end):
+        day_in_month = [0,31,28,31,30,31,30,31,31,30,31,30,31]
+
+        def is_leap(year):
+            return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+        def day_of_year(day, month, year):
+            day_of_years = 0
+            if is_leap(year):
+                day_in_month[2] += 1
+            else:
+                if month == 2 and day == 29:
+                    return -1
+            for i in range(1,month):
+                day_of_years += day_in_month[i]
+            day_of_years += day
+            if is_leap(year):
+                day_in_month[2] -= 1
+            return day_of_years
+
+        def day_in_year(year):
+            days = 0
+            if is_leap(year)==True:
+                days = 366
+            else:
+                days = 365
+            return days
+
+        def day_split(date_start,date_end):
+            d1, m1, y1 = date_start.split("-")
+            d2, m2, y2 = date_end.split("-")
+            d1, m1, y1 = int(d1), int(m1), int(y1)
+            d2, m2, y2 = int(d2), int(m2), int(y2)
+            return d1,m1,y1,d2,m2,y2
+
+        def date_diff():
+            day_count_temp = 0
+            day_diff = 0
+            d1,m1,y1,d2,m2,y2 = day_split(date_start, date_end)
+            if check_input(d1,m1,y1)==False or check_input(d2,m2,y2)==False:
+                return 0
+            else:
+                for y in range(y1,y2+1):
+                    day_count_temp += day_in_year(y)
+                    back = day_in_year(y2)-day_of_year(d2,m2,y2) - 1
+                    front = day_of_year(d1,m1,y1)
+                    day_diff = day_count_temp - front - back
+                    return day_diff
+
+        def check_input(d,m,y):
+            if m in [1,3,5,7,8,10,12]:
+                if d<0 or d>31:
+                    return False
+            elif m in [4,6,9,11]:
+                if d<0 or d>30:
+                    return False
+            elif is_leap(y)==True and m==2:
+                if d<0 or d>29:
+                    return False
+            else:
+                return False
+
+        return date_diff()
