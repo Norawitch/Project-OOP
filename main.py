@@ -1,19 +1,18 @@
 from typing import Union
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import os
+
+
 
 from testclass import System, Category, Accessory, ReservationAccessory, Order, Cart, Payment, Account, Customer
 
-
-
-
 from pydantic import BaseModel
 
-class AccountModel(BaseModel):
-    name: str
-    email: str
-    password: str
-    address: str
+class GetByEmailPassword(BaseModel):
+    email: str | str = "sawabe@gmail.com"
+    password: str = "sawabebe"
 
 class SearchBrand(BaseModel):
     str_input: str
@@ -22,7 +21,7 @@ class SearchPrice(BaseModel):
     max_price: int
 
 class CustomerID(BaseModel):
-    customer_id: str | str = "11015"
+    customer_id: str | str = "10000"
 
 class ToCart(BaseModel):
     customer_id: str | str = "11015"
@@ -55,6 +54,15 @@ class PaymentModel(BaseModel):
 
 app = FastAPI()
 
+# Allow all origins and methods for CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 # ------------------------------------------------
 #ADD_ACCESSORY
 Website = System()
@@ -69,15 +77,15 @@ Website.add_category(category_len)
 Website.add_category(category_battery)
 Website.add_category(category_tripod)
 
-accessory1 = Accessory(id="001", name="EOS R10 (Body)", brand="Canon", cost=500, lenter="Tham")
-accessory2 = Accessory(id="002", name="EOS M50", brand="Canon", cost=400, lenter="Team")
-accessory3 = Accessory(id="003", name="X-T20", brand="Fujifilm", cost=350, lenter="Photo")
-accessory4 = Accessory(id="004", name="RF 15-35mm f/2.8L IS USM", brand="Canon", cost=950, lenter="Tham")
-accessory5 = Accessory(id="005", name="Sigma 150-600mm f/5-6.3 DG OS HSM Contemporary", brand="Sony", cost=550, lenter="Team")
-accessory6 = Accessory(id="006", name="OEM NP-F980, F970", brand="Sony", cost=50, lenter="Team")
-accessory7 = Accessory(id="007", name="LP-E6NH", brand="Canon", cost=70, lenter="Photo")
-accessory8 = Accessory(id="008", name="MKBFRA4-BH", brand="Manfrotto", cost=100, lenter="Photo")
-accessory9 = Accessory(id="009", name="Q666", brand="Zomei", cost=80, lenter="Tham")
+accessory1 = Accessory(id="001", name="EOS R10 (Body)", brand="Canon", cost=500, lenter="Tham", info="กล้อง CMOS APS-C ความละเอียด 24.2 ล้านพิกเซลถ่ายภาพต่อเนื่องได้สูงถึง 23 เฟรมต่อวินาที")
+accessory2 = Accessory(id="002", name="EOS M50", brand="Canon", cost=400, lenter="Team", info="กล้อง Mirrorless 24.2 ล้าน Pixel พร้อมจอ Touch Screen VDO4k จอพับได้ Sefie ดี skintone สวย")
+accessory3 = Accessory(id="003", name="X-T20", brand="Fujifilm", cost=350, lenter="Photo", info="กล้อง Mirrorless 24.2 ล้าน pixel Sensor ขนาด APS-C ถ่าย VDO 4K 30FPS พร้อมจอพับได้แบบ Touch Screen")
+accessory4 = Accessory(id="004", name="RF 15-35mm f/2.8L IS USM", brand="Canon", cost=950, lenter="Tham", info="")
+accessory5 = Accessory(id="005", name="Sigma 150-600mm f/5-6.3 DG OS HSM Contemporary", brand="Sony", cost=550, lenter="Team", info="")
+accessory6 = Accessory(id="006", name="OEM NP-F980, F970", brand="Sony", cost=50, lenter="Team", info="")
+accessory7 = Accessory(id="007", name="LP-E6NH", brand="Canon", cost=70, lenter="Photo", info="")
+accessory8 = Accessory(id="008", name="MKBFRA4-BH", brand="Manfrotto", cost=100, lenter="Photo", info="")
+accessory9 = Accessory(id="009", name="Q666", brand="Zomei", cost=80, lenter="Tham", info="")
 
 category_camera.add_accessory(accessory1)
 category_camera.add_accessory(accessory2)
@@ -91,9 +99,11 @@ category_tripod.add_accessory(accessory9)
 
 
 #ADD_CUSTOMER
-customer1 = Customer(customer_id="11015", email="sawabe@gmail.com", password="sawabebe", name="Sawabe", address="Gaegenamg1")
-customer2 = Customer(customer_id="11046", email="kamatsu@gmail.com", password="kamikami", name="Kamitsuri", address="Suwannaphum")
-customer3 = Customer(customer_id="12014",  email="12014@email.com", password="00001", name="Golf", address="Nakhon Si Thammarat")
+customer0 = Customer(email=None, password=None, name="Guest", address=None, acc_id="10000", role="guest")
+customer1 = Customer(email="sawabe@gmail.com", password="sawabebe", name="Sawabe", address="Gaegenamg1", acc_id="11015", role="customer")
+customer2 = Customer(email="kamatsu@gmail.com", password="kamikami", name="Kamitsuri", address="Suwannaphum", acc_id="11046", role="customer")
+customer3 = Customer(email="12014@gmail.com", password="00001", name="Golf", address="Nakhon Si Thammarat", acc_id="12014", role="customer")
+Website.add_customer(customer0)
 Website.add_customer(customer1)
 Website.add_customer(customer2)
 Website.add_customer(customer3)
@@ -102,8 +112,24 @@ Website.add_customer(customer3)
 #ADD_CART
 cart1 = Cart("001")
 cart2 = Cart("002")
+cart3 = Cart("003")
 customer1.add_cart(cart1)
 customer2.add_cart(cart2)
+customer3.add_cart(cart3)
+
+# For camera category
+@app.get('/')
+async def camera():
+    images_folder = 'C:/Basic Web/OOP Project/Project/image/camera'
+    images = []
+    for filename in os.listdir(images_folder):
+        if filename.endswith('.jpg') or filename.endswith('.png'):  # Adjust file extensions as needed
+            image_path = os.path.join(images_folder, filename)
+            images.append(image_path)
+    return {"images": images}
+
+
+
 # ------------------------------------------------
 
 # ACCOUNT
@@ -113,9 +139,8 @@ customer2.add_cart(cart2)
 
 # ADMIN
 # Check accessory
-@app.post("/accessory", tags=["Accessory"])
-async def search_accessory(data: GetAccessory) -> dict:
-    accessory_id = data.accessory_id
+@app.get("/accessory/{accessory_id}", tags=["Accessory"])
+async def search_accessory(accessory_id: str) -> dict:
     accessory = Website.search_accessory_by_id(accessory_id)
     return {
         "id": accessory.get_accessory_id(),
@@ -123,11 +148,30 @@ async def search_accessory(data: GetAccessory) -> dict:
         "brand": accessory.get_accessory_brand(),
         "price": accessory.get_accessory_cost(),
         "lenter": accessory.get_accessory_lenter(),
+        "info": accessory.get_accessory_info(),
         "reservation": [reservation.get_order_id() for reservation in accessory.get_list_reservation()]
     }
 
 
 # SEARCH
+# Search customer by email and password
+@app.post("/search_customer_by_email_password", tags=["Search"])
+async def search_customer_by_email_password(data: GetByEmailPassword) -> dict:
+    customer = Website.login(data.email, data.password)
+    if customer != None:
+        return {"data": customer.get_account_id()}
+    else:
+        return {"data": "Wrong email or password"}
+    
+# Search customer by id
+@app.post("/search_account_name_by_id", tags=["Search"])
+async def search_customer_name_by_id(data: CustomerID) -> str:
+    account = Website.search_account_by_id(data.customer_id)
+    if account != None:
+        return account.get_name()
+    else:
+        return data.customer_id
+
 # Search by name
 @app.post("/search_all_accessory_by", tags=["Search"])
 async def search_all_accessory_by_brand(data: SearchBrand) -> dict:
@@ -172,9 +216,9 @@ async def search_all_accessory_by_price(data: SearchPrice) -> dict:
 @app.post("/your_shopping_cart", tags=["Shopping Cart"])
 async def your_shopping_cart(data: CustomerID) -> dict:
     customer_id = data.customer_id
-    customer = Website.search_customer_by_id(customer_id)
+    customer = Website.search_account_by_id(customer_id)
     if customer != None:
-        shopping_cart = Website.search_cart_by_customer_id(customer_id)
+        shopping_cart = Website.search_cart_by_account_id(customer_id)
         accessory_data = []
         for accessory in shopping_cart.get_list_accessory_in_cart():
             accessory_data.append({
@@ -183,11 +227,12 @@ async def your_shopping_cart(data: CustomerID) -> dict:
                 "brand": accessory.get_accessory_brand(),
                 "price": accessory.get_accessory_cost(),
                 "lenter": accessory.get_accessory_lenter(),
+                "info": accessory.get_accessory_info()
             })
         if len(shopping_cart.get_list_accessory_in_cart()) > 0:
             return {"data": accessory_data}
         else:
-            return {"data": "You don't have any accessory in cart yet"}
+            return {"data": accessory_data}
     else:
         return {"data": f"Don't have customer id {customer_id}"}
 # Add accessory to cart
@@ -196,9 +241,9 @@ async def add_accessory_to_cart(data: ToCart) -> dict:
     customer_id = data.customer_id
     accessory_id = data.accessory_id
     # loop get cart from customer id
-    customer = Website.search_customer_by_id(customer_id)
+    customer = Website.search_account_by_id(customer_id)
     if customer != None:
-        shopping_cart = Website.search_cart_by_customer_id(customer_id)
+        shopping_cart = Website.search_cart_by_account_id(customer_id)
         # add to cart
         accessory = Website.search_accessory_by_id(accessory_id)
         if accessory != None:
@@ -213,7 +258,7 @@ async def add_accessory_to_cart(data: ToCart) -> dict:
 async def delete_accessory_in_cart(data: ToCart) -> dict:
     customer_id = data.customer_id
     accessory_id = data.accessory_id
-    customer = Website.search_customer_by_id(customer_id)
+    customer = Website.search_account_by_id(customer_id)
     if customer != None:
         shopping_cart = customer.get_cart()
         for accessory in shopping_cart.get_list_accessory_in_cart():
@@ -228,7 +273,7 @@ async def delete_accessory_in_cart(data: ToCart) -> dict:
 @app.post("/clear_accessory_in_cart", tags=["Shopping Cart"])
 async def clear_accessory_in_cart(data: CustomerID) -> dict:
     customer_id = data.customer_id
-    customer = Website.search_customer_by_id(customer_id)
+    customer = Website.search_account_by_id(customer_id)
     if customer != None:
         shopping_cart = customer.get_cart()
         shopping_cart.clear_accessory_in_cart()
@@ -242,10 +287,10 @@ async def clear_accessory_in_cart(data: CustomerID) -> dict:
 @app.post("/check_status_confirmed_order", tags=["Order"])
 async def check_status_confirmed_order(data: CustomerID) -> dict:
     customer_id = data.customer_id
-    customer = Website.search_customer_by_id(customer_id)
+    customer = Website.search_account_by_id(customer_id)
     if customer != None:
         order_list_data = []
-        order_list = Website.search_order_by_customer_id(customer_id)
+        order_list = Website.search_order_by_account_id(customer_id)
         for order in order_list:
             accessory_data = []
             reservation_accessory_data = order.get_list_reservation_accessory_in_order()
@@ -261,6 +306,7 @@ async def check_status_confirmed_order(data: CustomerID) -> dict:
                     "brand": accessory.get_accessory_brand(),
                     "price": accessory.get_accessory_cost(),
                     "lenter": accessory.get_accessory_lenter(),
+                    "info": accessory.get_accessory_info(),
                     "date start": reservation_accessory.get_date_start(),
                     "date end": reservation_accessory.get_date_end(),
                     "order_id": reservation_accessory.get_order_id()
@@ -283,7 +329,7 @@ async def confirm_order(data: ConfirmOrder) -> dict:
     customer_id = data.customer_id
     date_start = data.date_start
     date_end = data.date_end
-    customer = Website.search_customer_by_id(customer_id)
+    customer = Website.search_account_by_id(customer_id)
     if customer != None:
         shopping_cart = customer.get_cart()
         if len(shopping_cart.get_list_accessory_in_cart()) > 0:
@@ -315,7 +361,7 @@ async def cancel_order(data: CancelOrder) -> dict:
 async def check_payment(data: CustomerID) -> dict:
     customer_id = data.customer_id
     payment_list = []
-    customer = Website.search_customer_by_id(customer_id)
+    customer = Website.search_account_by_id(customer_id)
     for payment in customer.get_payment_list():
         payment_list.append({
             "payment_id": payment.get_payment_id(),
