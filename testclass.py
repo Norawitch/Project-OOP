@@ -2,16 +2,17 @@ import datetime
 
 class System:
     def __init__(self):
-        self.__list_customer = []
+        self.__list_account = []
         self.__list_brand = []
         self.__list_category = []
         self.__list_order = []
         self.__list_promotion_code = []
+        self.__list_contract = []
         self.__order_id_counter = 0
         self.__payment_id_counter = 0
 
-    def get_list_customer(self):
-        return self.__list_customer
+    def get_list_account(self):
+        return self.__list_account
     
     def get_list_brand(self):
         return self.__list_brand
@@ -25,17 +26,10 @@ class System:
     def get_list_promotion_code(self):
         return self.__list_promotion_code
     
-
-
     def add_customer(self, customer):
-        self.__list_customer.append(customer)
+        self.__list_account.append(customer)
         # self.__order_id_counter += 1
         # customer.edit_customer_id(self.__customer_id_counter)
-
-
-
-
-
     
     def add_category(self , category):
         self.__list_category.append(category)
@@ -45,22 +39,22 @@ class System:
         self.__order_id_counter += 1
         order.edit_order_id(self.__order_id_counter)  # Pass the incremented order_id
 
-    def search_customer_by_id(self, customer_id):
-        for customer in self.__list_customer:
-            if customer_id == customer.get_customer_id():
+    def search_account_by_id(self, customer_id):
+        for customer in self.__list_account:
+            if customer_id == customer.get_account_id():
                 return customer
         return None
     
-    def search_order_by_customer_id(self, customer_id):
+    def search_order_by_account_id(self, customer_id):
         order_list = []
         for order in self.__list_order:
-            if customer_id == order.get_customer_id():
+            if customer_id == order.get_account_id():
                 order_list.append(order)       
         return order_list
     
-    def search_cart_by_customer_id(self, customer_id):
-        for customer in self.__list_customer:
-            if customer_id == customer.get_customer_id():
+    def search_cart_by_account_id(self, customer_id):
+        for customer in self.__list_account:
+            if customer_id == customer.get_account_id():
                 return customer.get_cart()
         return None
 
@@ -104,9 +98,15 @@ class System:
                     return accessory
         return None
     
+    def login(self , input_email , input_password):
+        for account in self.__list_account:
+            if account.get_email() == input_email and account.get_password() == input_password:
+                return account
+        return None
+    
     def cancel_reservation(self, customer_id , order_id):
         for order in self.__list_order :
-            if customer_id == order.get_customer_id() and int(order_id) == order.get_order_id():   
+            if customer_id == order.get_account_id() and int(order_id) == order.get_order_id():   
                 order.edit_status("canceled")
                 for reservation_accessory in order.get_list_reservation_accessory_in_order():
                     real_accessory = reservation_accessory.get_reservation_accessory()
@@ -117,7 +117,7 @@ class System:
                 
     def payment(self , customer_id ,payment ,password ,order_id ,amount):
         order_list = self.search_order_by_customer_id(customer_id)
-        customer = self.search_customer_by_id(customer_id)
+        customer = self.search_account_by_id(customer_id)
         for order in order_list:
             if order.get_order_id() == order_id:
                 # Correct password
@@ -151,14 +151,18 @@ class Category:
 
     def get_list_accessory(self):
         return self.__list_Accessory
+    
+    def remove_accessory_in_category(self,accessory):
+        self.__list_Accessory.remove(accessory)
 
 class Accessory:
-    def __init__(self,id,name,brand,cost,lenter):
+    def __init__(self,id,name,brand,cost,lenter, info):
         self.__accessory_id = id
         self.__accessory_name = name
         self.__accessory_brand = brand
         self.__accessory_cost = cost
         self.__accessory_lenter = lenter
+        self.__accessory_info = info
         self.__reservation_accessory_list =[]
 
     def get_accessory_id(self):
@@ -175,6 +179,9 @@ class Accessory:
     
     def get_accessory_lenter(self):
         return self.__accessory_lenter
+    
+    def get_accessory_info(self):
+        return self.__accessory_info
     
     def get_list_reservation(self):
         return self.__reservation_accessory_list
@@ -221,13 +228,25 @@ class Payment:
         self.__order_id = order_id
 
 
+class contract:
+    def __init__(self , customer , lenter , order , status):
+        self.__customer = customer
+        self.__lenter = lenter
+        self.__order = order 
+        self.__status = status
+
+    def get_atatus_contract(self):
+        return self.__status
  
 class Account:
-    def __init__(self, name, email, password, address):
+    def __init__(self, name, email, password, address , role , acc_id):
         self.__name = name
         self.__email = email
         self.__password = password
         self.__address = address
+        self.__role = role
+        self.__account_id = acc_id
+        self.__list_contract = []
 
     def get_name(self):
         return self.__name
@@ -241,16 +260,17 @@ class Account:
     def get_address(self):
         return self.__address
     
+    def get_list_contract(self):
+        return self.__list_contract
+    
+    def get_account_id(self):
+        return self.__account_id
+    
 class Customer(Account):
-    def __init__(self, customer_id, email, password, name , address, cart = None):
-        super().__init__(email, name, password, address)
-        self.__customer_id = customer_id
+    def __init__(self,  name, email, password, address , role , acc_id,  cart = None):
+        super().__init__(name, email, password, address , role , acc_id)
         self.__cart = None
-        # self.__list_order = []
         self.__list_payment = []
-
-    def get_customer_id(self):
-        return self.__customer_id
     
     def get_list_order(self):
         return self.__list_order
@@ -267,11 +287,50 @@ class Customer(Account):
     def add_cart(self, cart):
         self.__cart = cart
     
-    # def add_order(self, order):
-    #     self.__list_order.append(order)
+    def add_payment(self, payment):
+        self.__list_payment.append(payment)
+
+class Lenter(Account):
+    def __init__(self,  name, email, password, address , role , acc_id,  cart = None, income = None):
+        super().__init__(name, email, password, address , role , acc_id)
+        self.__cart = None
+        self.__income = None
+        self.__list_payment = []
+        self.__list_own_accessory = []
+    
+    def get_list_order(self):
+        return self.__list_order
+    
+    def get_cart(self):
+        return self.__cart
+    
+    def get_payment_list(self):
+        return self.__list_payment
+    
+    def edit_customer_id(self, customer_id):
+        self.__customer_id = customer_id
+    
+    def add_cart(self, cart):
+        self.__cart = cart
     
     def add_payment(self, payment):
         self.__list_payment.append(payment)
+
+    def add_accessory(self, id,name,brand,cost , category_type):
+        accessory = Accessory(id,name,brand,cost,self.__lenter_id)
+        category_type.add_accessory(accessory)
+        self.__list_own_accessory.append(accessory)
+
+    def remove_accessory(self, id):
+        for category  in System.get_list_category:
+            for accessory in category:
+                if accessory.get_accessory_id() == id :
+                    self.__list_own_accessory.append(accessory)
+                    category.remove_accessory_in_category(accessory)
+
+    def edit_income(self, amount):
+        self.__income = amount
+
     
 class Cart:
     def __init__(self, cart_id):
@@ -332,7 +391,7 @@ class Order:
     def get_order_status(self):
         return self.__status
     
-    def get_customer_id(self):
+    def get_account_id(self):
         return self.__customer_id
     
     def get_list_reservation_accessory_in_order(self):
