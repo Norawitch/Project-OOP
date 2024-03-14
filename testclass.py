@@ -26,7 +26,7 @@ class System:
     def get_list_promotion_code(self):
         return self.__list_promotion_code
     
-    def add_customer(self, customer):
+    def add_account(self, customer):
         self.__list_account.append(customer)
         # self.__order_id_counter += 1
         # customer.edit_customer_id(self.__customer_id_counter)
@@ -51,6 +51,12 @@ class System:
             if customer_id == order.get_account_id():
                 order_list.append(order)       
         return order_list
+    
+    def search_order_by_id(self, order_id):
+        for order in self.__list_order:
+            if order_id == order.get_order_id():
+                return order
+        return None
     
     def search_cart_by_account_id(self, customer_id):
         for customer in self.__list_account:
@@ -115,23 +121,23 @@ class System:
                             real_accessory.get_list_reservation().remove(reservation)
         return "success"
                 
-    def payment(self , customer_id ,payment ,password ,order_id ,amount):
-        order_list = self.search_order_by_customer_id(customer_id)
-        customer = self.search_account_by_id(customer_id)
-        for order in order_list:
-            if order.get_order_id() == order_id:
-                # Correct password
-                if customer.get_password() == password and amount == int(order.get_total_cost()):
-                    order.edit_status("Paid")
-                    customer.add_payment(payment)
-                    payment.edit_order_id(order_id)
-                    self.__payment_id_counter += 1
-                    payment.edit_payment_id(self.__payment_id_counter)
-                    return "Paid"
-                else:
-                    return "Failed to pay"
-            else:
-                return "Not found order id"
+    # def payment(self , customer_id ,payment ,password ,order_id ,amount):
+    #     order_list = self.search_order_by_customer_id(customer_id)
+    #     customer = self.search_account_by_id(customer_id)
+    #     for order in order_list:
+    #         if order.get_order_id() == order_id:
+    #             # Correct password
+    #             if customer.get_password() == password and amount == int(order.get_total_cost()):
+    #                 order.edit_status("Paid")
+    #                 customer.add_payment(payment)
+    #                 payment.edit_order_id(order_id)
+    #                 self.__payment_id_counter += 1
+    #                 payment.edit_payment_id(self.__payment_id_counter)
+    #                 return "Paid"
+    #             else:
+    #                 return "Failed to pay"
+    #         else:
+    #             return "Not found order id"
 
       
 class Category:
@@ -239,10 +245,11 @@ class contract:
         return self.__status
  
 class Account:
-    def __init__(self, name, email, password, address , role , acc_id):
+    def __init__(self, name, email, password, tel, address , role , acc_id):
         self.__name = name
         self.__email = email
         self.__password = password
+        self.__tel = tel
         self.__address = address
         self.__role = role
         self.__account_id = acc_id
@@ -257,6 +264,9 @@ class Account:
     def get_password(self):
         return self.__password
     
+    def get_tel(self):
+        return self.__tel
+
     def get_address(self):
         return self.__address
     
@@ -267,8 +277,8 @@ class Account:
         return self.__account_id
     
 class Customer(Account):
-    def __init__(self,  name, email, password, address , role , acc_id,  cart = None):
-        super().__init__(name, email, password, address , role , acc_id)
+    def __init__(self,  name, email, password, tel, address , role , acc_id,  cart = None):
+        super().__init__(name, email, password, tel, address , role , acc_id)
         self.__cart = None
         self.__list_payment = []
     
@@ -291,8 +301,8 @@ class Customer(Account):
         self.__list_payment.append(payment)
 
 class Lenter(Account):
-    def __init__(self,  name, email, password, address , role , acc_id,  cart = None, income = None):
-        super().__init__(name, email, password, address , role , acc_id)
+    def __init__(self,  name, email, password, tel, address , role , acc_id,  cart = None, income = None):
+        super().__init__(name, email, password, tel, address , role , acc_id)
         self.__cart = None
         self.__income = None
         self.__list_payment = []
@@ -463,10 +473,10 @@ class ReservationAccessory:
             return days
 
         def day_split(date_start,date_end):
-            d1, m1, y1 = date_start.split("-")
-            d2, m2, y2 = date_end.split("-")
-            d1, m1, y1 = int(d1), int(m1), int(y1)
-            d2, m2, y2 = int(d2), int(m2), int(y2)
+            y1, m1, d1 = date_start.split("-")
+            y2, m2, d2 = date_end.split("-")
+            y1, m1, d1 = int(y1), int(m1), int(d1)
+            y2, m2, d2 = int(y2), int(m2), int(d2)
             return d1,m1,y1,d2,m2,y2
 
         def date_diff():

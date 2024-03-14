@@ -22,9 +22,11 @@ class SearchPrice(BaseModel):
 
 class CustomerID(BaseModel):
     customer_id: str | str = "10000"
+class OrderID(BaseModel):
+    order_id: int
 
 class ToCart(BaseModel):
-    customer_id: str | str = "11015"
+    customer_id: str
     accessory_id: str
 
 class ConfirmOrder(BaseModel):
@@ -32,14 +34,14 @@ class ConfirmOrder(BaseModel):
     date_start: str | str = "7-3-2567"
     date_end: str | str = "9-3-2567"
 class CancelOrder(BaseModel):
-    customer_id: str | str = "11015"
+    customer_id: str
     order_id: int
 
 class GetAccessory(BaseModel):
     accessory_id: str
 
 class PaymentModel(BaseModel):
-    customer_id: str | str = "11015"
+    customer_id: str 
     payment_type: str | str = "bank"
     payment_detail: dict | dict = {
         "bank_name": "KrungThai",
@@ -54,12 +56,12 @@ class PaymentModel(BaseModel):
 
 app = FastAPI()
 
-# Allow all origins and methods for CORS
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://127.0.0.1:8000"],  # Replace this with the origin of your frontend
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -99,14 +101,16 @@ category_tripod.add_accessory(accessory9)
 
 
 #ADD_CUSTOMER
-customer0 = Customer(email=None, password=None, name="Guest", address=None, acc_id="10000", role="guest")
-customer1 = Customer(email="sawabe@gmail.com", password="sawabebe", name="Sawabe", address="Gaegenamg1", acc_id="11015", role="customer")
-customer2 = Customer(email="kamatsu@gmail.com", password="kamikami", name="Kamitsuri", address="Suwannaphum", acc_id="11046", role="customer")
-customer3 = Customer(email="12014@gmail.com", password="00001", name="Golf", address="Nakhon Si Thammarat", acc_id="12014", role="customer")
-Website.add_customer(customer0)
-Website.add_customer(customer1)
-Website.add_customer(customer2)
-Website.add_customer(customer3)
+admin = Customer(email="admin@hmail.com", password="admin888", name="Admin", tel=None, address=None, acc_id="00000", role="admin")
+customer0 = Customer(email=None, password=None, name="Guest Guest", tel=None, address=None, acc_id="10000", role="guest")
+customer1 = Customer(email="sawabe@gmail.com", password="sawabebe", name="Sawabe Sawasaki", tel="0828888888", address="Gaegenamg1", acc_id="10001", role="customer")
+customer2 = Customer(email="kamatsu@gmail.com", password="kamikami", name="Kamitsuri Chisato", tel="0888888888", address="Suwannaphum", acc_id="10002", role="customer")
+customer3 = Customer(email="12014@gmail.com", password="12014", name="Golf Gloffy", tel="0888888888", address="Nakhon Si Thammarat", acc_id="10003", role="customer")
+Website.add_account(admin)
+Website.add_account(customer0)
+Website.add_account(customer1)
+Website.add_account(customer2)
+Website.add_account(customer3)
 
 
 #ADD_CART
@@ -139,7 +143,7 @@ async def camera():
 
 # ADMIN
 # Check accessory
-@app.get("/accessory/{accessory_id}", tags=["Accessory"])
+@app.get("/accessory/{accessory_id}", tags=["Admin Accessory"])
 async def search_accessory(accessory_id: str) -> dict:
     accessory = Website.search_accessory_by_id(accessory_id)
     return {
@@ -151,7 +155,12 @@ async def search_accessory(accessory_id: str) -> dict:
         "info": accessory.get_accessory_info(),
         "reservation": [reservation.get_order_id() for reservation in accessory.get_list_reservation()]
     }
-
+# Search order by id
+@app.post("/search_order_id", tags=["Admin Order"])
+async def search_order_id(data: OrderID) -> dict:
+    order_id = data.order_id
+    order = Website.search_order_by_id(order_id)
+    return order
 
 # SEARCH
 # Search customer by email and password
@@ -168,9 +177,22 @@ async def search_customer_by_email_password(data: GetByEmailPassword) -> dict:
 async def search_customer_name_by_id(data: CustomerID) -> str:
     account = Website.search_account_by_id(data.customer_id)
     if account != None:
-        return account.get_name()
+        name = account.get_name()
+        first_name = name.split()[0]
+        return first_name
     else:
-        return data.customer_id
+        return None
+# Search address and email by id
+@app.post("/search_account_info_by_id", tags=["Search"])
+async def search_account_info_by_id(data: CustomerID) -> dict:
+    account = Website.search_account_by_id(data.customer_id)
+    if account != None:
+        return {
+            "address": account.get_address(),
+            "email": account.get_email()
+        }
+    else:
+        return None
 
 # Search by name
 @app.post("/search_all_accessory_by", tags=["Search"])
@@ -265,8 +287,8 @@ async def delete_accessory_in_cart(data: ToCart) -> dict:
             if accessory.get_accessory_id() == accessory_id:
                 shopping_cart.delete_accessory_in_cart(accessory)
                 return {"data": f"Accessory id {accessory_id} has been deleted from your cart"}
-            else:
-                return {"data": f"You don't have accessory id {accessory_id} in your cart"}
+        else:
+            return {"data": f"You don't have accessory id {accessory_id} in your cart"}
     else:
         return {"data": f"Don't have customer id {customer_id}"}
 # Clear accessory in cart
@@ -307,12 +329,12 @@ async def check_status_confirmed_order(data: CustomerID) -> dict:
                     "price": accessory.get_accessory_cost(),
                     "lenter": accessory.get_accessory_lenter(),
                     "info": accessory.get_accessory_info(),
-                    "date start": reservation_accessory.get_date_start(),
-                    "date end": reservation_accessory.get_date_end(),
+                    "date_start": reservation_accessory.get_date_start(),
+                    "date_end": reservation_accessory.get_date_end(),
                     "order_id": reservation_accessory.get_order_id()
                 })
             order_list_data.append({
-                "order id": order_id,
+                "order_id": order_id,
                 "status": order_status,
                 "data": accessory_data,
                 "total": total_cost
@@ -320,7 +342,7 @@ async def check_status_confirmed_order(data: CustomerID) -> dict:
         if len(order_list) > 0:
             return {"data": order_list_data}
         else:
-            return {"data": "You don't have any order yet"}
+            return {"data": order_list_data}
     else:
         return {"data": f"Don't have customer id {customer_id}"}
 # Confirm Order
